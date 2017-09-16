@@ -1,14 +1,5 @@
 # *_*coding:utf-8 *_*
 
-# Accept:*/*
-# Accept-Encoding:gzip, deflate, br
-# Accept-Language:zh-CN,zh;q=0.8
-# Connection:keep-alive
-# Cookie:_s_tentry=www.liaoxuefeng.com; Apache=6685611027743.496.1499329798538; SINAGLOBAL=6685611027743.496.1499329798538; ULV=1499329798818:1:1:1:6685611027743.496.1499329798538:; login_sid_t=9d77a35c0cf60e3991d0f946acbf6f7e; UM_distinctid=15dfeb642c639b-02b009af89a27f-3a3e5e06-100200-15dfeb642c796e; cross_origin_proto=SSL; UOR=www.liaoxuefeng.com,widget.weibo.com,login.sina.com.cn; SSOLoginState=1505191588; SCF=As5M8pYdNXV8DsE1yRL0jHbx9i2edKOXMFWFttONxRbqgBUYInzCypvfMOTyojKk7-i2PdgYEfi_mQqQesPvd4Q.; SUB=_2A250sxb0DeRhGedJ71QV8S7EyziIHXVXyQ88rDV8PUNbmtAKLXfBkW9gwcR5feyRIWIeaw_rKlQkyVWtpg..; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9WFjH5gxyx174yF_-1A505lE5JpX5K2hUgL.Fo2NShqXeK5RehB2dJLoI79rUgSjTg7t; SUHB=0mxV2tkDyZGCYQ; ALF=1536727587; un=15222929709; wvr=6
-# Host:contentrecommend-out.uve.weibo.com
-# Referer:https://weibo.com/516571237/home?wvr=5&lf=reg
-# User-Agent:Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36
-
 from bs4 import BeautifulSoup
 import urllib2
 import urllib
@@ -19,18 +10,6 @@ import  os
 cj=cookielib.CookieJar()
 opener=urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 urllib2.install_opener(opener)
-headers ={'User-Agent': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.114 Safari/537.36',
-          'Cookie':'_s_tentry=www.liaoxuefeng.com; Apache=6685611027743.496.1499329798538; SINAGLOBAL=6685611027743.496.1499329798538; ' \
-                   'ULV=1499329798818:1:1:1:6685611027743.496.1499329798538:; login_sid_t=9d77a35c0cf60e3991d0f946acbf6f7e; ' \
-                   'UM_distinctid=15dfeb642c639b-02b009af89a27f-3a3e5e06-100200-15dfeb642c796e; cross_origin_proto=SSL;' \
-                   ' UOR=www.liaoxuefeng.com,widget.weibo.com,login.sina.com.cn; SSOLoginState=1505191588; ' \
-                   'SCF=As5M8pYdNXV8DsE1yRL0jHbx9i2edKOXMFWFttONxRbqgBUYInzCypvfMOTyojKk7-i2PdgYEfi_mQqQesPvd4Q.; ' \
-                   'SUB=_2A250sxb0DeRhGedJ71QV8S7EyziIHXVXyQ88rDV8PUNbmtAKLXfBkW9gwcR5feyRIWIeaw_rKlQkyVWtpg..; ' \
-                   'SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9WFjH5gxyx174yF_-1A505lE5JpX5K2hUgL.Fo2NShqXeK5RehB2dJLoI79rUgSjTg7t; ' \
-                   'SUHB=0mxV2tkDyZGCYQ; ALF=1536727587; un=15222929709; wvr=6',
-          'Host':'contentrecommend-out.uve.weibo.com',
-          'Connection': 'keep-alive',
-          'Referer':'https://weibo.com/516571237/home?wvr=5&lf=reg' }
 
 
 from selenium import webdriver
@@ -60,7 +39,9 @@ def login(driver, account, password):
         login_pw.send_keys(password)
         login_pw.send_keys(Keys.RETURN)
     except:
-        pass
+        print u"登录失败"
+
+
 
 def to_bottom(driver):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -77,7 +58,8 @@ def find_next_page_or_none(driver):
 def save_page_content(driver, output1, output2):
     # 抓到所有微博
     e = driver.find_elements_by_xpath('//div[@class="WB_text W_f14"]')
-    pic = driver.find_elements_by_xpath('//div[@class="WB_expand_media_box"]')
+    pic = driver.find_elements_by_xpath('//div[@class="WB_media_wrap clearfix"]')
+    # pic = driver.find_elements_by_xpath('//li[@class="WB_pic li_1 S_bg1 S_line2 bigcursor"]')
     for x in e:
         try:
             output1.write(x.text.encode('utf8'))
@@ -86,28 +68,32 @@ def save_page_content(driver, output1, output2):
         except:
             print u"抓取文字失败"
 
+    pic_url= []
     for y in pic:
-        print y
         try:
             all_img = y.find_elements_by_tag_name("img")  # 某一条微博下的所有图片
-            pic_url = [x.get_attribute('src') for x in all_img]
-
+            for img in all_img:
+                pic_url.append(img.get_attribute('src'))
+        except:
+            print u"图片下载失败"
+        finally:
             # 保存图片到本地以该girl标题命名的目录中
             save_pictures(output2, pic_url)
-        except:
-            print
-            u"图片下载失败"
-
 def main(account, password,  pages=10, one_page_try=6):
     driver = webdriver.Chrome()
     driver.get('https://weibo.com/')
+
     time.sleep(3)
     login(driver, account, password)
+    # # 获得cookie信息
+    # cookie = driver.get_cookies()
+    # print cookie
+    # driver.add_cookie(cookie)
 
-    driver.get('https://weibo.com/stormstormstorm?profile_ftype=1&is_ori=1#_0')
+    driver.get('https://weibo.com/stormstormstorm?profile_ftype=1&is_pic=1#_0')
 
     output1 = open(os.getcwd() + "/sina/yalu.txt", "wb")
-    output2 = os.getcwd() + "/sina/yalu_img"
+    output2 = os.getcwd() + "/sina/yalu_img/"
 
     for i in range(pages):
         for j in range(one_page_try):
@@ -126,8 +112,9 @@ def main(account, password,  pages=10, one_page_try=6):
         # 翻页
         try:
             next_url = find_next_page_or_none(driver)
+            # driver.add_cookie(cookie)
             driver.get(next_url)
-            login(driver, account, password)
+            # login(driver, account, password)
             # 重新login
         except:
             print u"翻页失败"
@@ -176,6 +163,6 @@ def write_text(path, info):
         fp.write('\n'.encode('utf-8'))
 
 if __name__ == '__main__':
-    account = "1"
+    account = "15"
     password = ""
     main(account, password)
