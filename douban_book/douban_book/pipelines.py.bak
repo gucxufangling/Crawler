@@ -10,7 +10,7 @@ from twisted.enterprise import adbapi
 
 class DoubanBookPipeline(object):
     def __init__(self):
-        self.con = db.connect(user="root", passwd=" ", host="localhost", db="testdb", charset="utf8")
+        self.con = db.connect(user="root", passwd="guc", host="localhost", db="testdb", charset="utf8")
         self.cur = self.con.cursor()
         self.cur.execute('drop table douban_books')
         self.cur.execute(
