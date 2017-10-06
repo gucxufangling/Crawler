@@ -163,6 +163,6 @@ def write_text(path, info):
         fp.write('\n'.encode('utf-8'))
 
 if __name__ == '__main__':
-    account = "15"
-    password = ""
+    account = "sina_acount"
+    password = "pass"
     main(account, password)
